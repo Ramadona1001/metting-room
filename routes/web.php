@@ -74,5 +74,8 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 });
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('admin.dashboard');
+    }
     return redirect()->route('login');
 });
