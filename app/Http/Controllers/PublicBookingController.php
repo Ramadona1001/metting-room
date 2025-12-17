@@ -60,16 +60,29 @@ class PublicBookingController extends Controller
         $validated = $request->validate([
             'employee_name' => 'required|string|max:255',
             'employee_email' => 'required|email|max:255',
-            'start_time' => 'required|date_format:Y-m-d H:i',
-            'end_time' => 'required|date_format:Y-m-d H:i|after:start_time',
+            'company_id' => 'required|exists:companies,id',
+            'department_id' => 'required|exists:departments,id',
+            'booking_date' => 'required|date|date_equals:today',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
         ], [
             'employee_name.required' => 'اسم الموظف مطلوب',
             'employee_email.required' => 'البريد الإلكتروني مطلوب',
             'employee_email.email' => 'البريد الإلكتروني غير صالح',
+            'company_id.required' => 'الشركة مطلوبة',
+            'company_id.exists' => 'الشركة غير موجودة',
+            'department_id.required' => 'القسم مطلوب',
+            'department_id.exists' => 'القسم غير موجود',
+            'booking_date.required' => 'تاريخ الحجز مطلوب',
+            'booking_date.date_equals' => 'الحجز متاح لنفس اليوم فقط',
             'start_time.required' => 'وقت البداية مطلوب',
             'end_time.required' => 'وقت الانتهاء مطلوب',
             'end_time.after' => 'وقت الانتهاء يجب أن يكون بعد وقت البداية',
         ]);
+
+        // Combine date with times
+        $validated['start_time'] = $validated['booking_date'] . ' ' . $validated['start_time'];
+        $validated['end_time'] = $validated['booking_date'] . ' ' . $validated['end_time'];
 
         $result = $this->bookingService->createBooking($room, $validated);
 
