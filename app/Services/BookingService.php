@@ -71,6 +71,8 @@ class BookingService
         $booking = DB::transaction(function () use ($room, $data, $startTime, $endTime) {
             return Booking::create([
                 'meeting_room_id' => $room->id,
+                'company_id' => $data['company_id'] ?? null,
+                'department_id' => $data['department_id'] ?? null,
                 'employee_name' => $data['employee_name'],
                 'employee_email' => $data['employee_email'],
                 'start_time' => $startTime,

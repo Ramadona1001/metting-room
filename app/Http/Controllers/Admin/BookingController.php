@@ -17,7 +17,7 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
-        $query = Booking::with(['meetingRoom.company', 'meetingRoom.department']);
+        $query = Booking::with(['meetingRoom.company', 'meetingRoom.department', 'company', 'department']);
 
         if ($request->filled('company_id')) {
             $query->whereHas('meetingRoom', function ($q) use ($request) {

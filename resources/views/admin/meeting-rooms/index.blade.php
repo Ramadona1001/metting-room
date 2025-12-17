@@ -88,18 +88,12 @@
                                     <a href="{{ route('admin.meeting-rooms.show', $room) }}" class="btn btn-primary btn-sm">عرض</a>
                                     <a href="{{ route('admin.meeting-rooms.qr-code', $room) }}" class="btn btn-dark btn-sm">QR</a>
                                     <a href="{{ route('admin.meeting-rooms.edit', $room) }}" class="btn btn-warning btn-sm">تعديل</a>
-                                    <form action="{{ route('admin.meeting-rooms.toggle-status', $room) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-{{ $room->status === 'active' ? 'secondary' : 'success' }} btn-sm">
-                                            {{ $room->status === 'active' ? 'تعطيل' : 'تفعيل' }}
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('admin.meeting-rooms.destroy', $room) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذه الغرفة؟')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">حذف</button>
-                                    </form>
+                                    <button type="button" class="btn btn-{{ $room->status === 'active' ? 'secondary' : 'success' }} btn-sm" 
+                                            onclick="toggleRoomStatus({{ $room->id }})">
+                                        {{ $room->status === 'active' ? 'تعطيل' : 'تفعيل' }}
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" 
+                                            onclick="deleteRoom({{ $room->id }})">حذف</button>
                                 </td>
                             </tr>
                         @empty
@@ -118,4 +112,28 @@
         </div>
     @endif
 </div>
+
+<!-- Hidden forms for actions -->
+@foreach($rooms as $room)
+<form id="toggle-form-{{ $room->id }}" action="{{ route('admin.meeting-rooms.toggle-status', $room) }}" method="POST" style="display:none;">
+    @csrf
+    @method('PATCH')
+</form>
+<form id="delete-form-{{ $room->id }}" action="{{ route('admin.meeting-rooms.destroy', $room) }}" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+</form>
+@endforeach
+
+<script>
+function toggleRoomStatus(id) {
+    document.getElementById('toggle-form-' + id).submit();
+}
+
+function deleteRoom(id) {
+    if (confirm('هل أنت متأكد من حذف هذه الغرفة؟')) {
+        document.getElementById('delete-form-' + id).submit();
+    }
+}
+</script>
 @endsection

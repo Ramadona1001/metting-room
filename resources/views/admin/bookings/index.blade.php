@@ -74,8 +74,9 @@
                             </th>
                             <th>#</th>
                             <th>الموظف</th>
+                            <th>شركة الموظف</th>
+                            <th>قسم الموظف</th>
                             <th>الغرفة</th>
-                            <th>الشركة</th>
                             <th>الوقت</th>
                             <th>الحالة</th>
                             <th>الإجراءات</th>
@@ -94,11 +95,15 @@
                                     <strong>{{ $booking->employee_name }}</strong><br>
                                     <small class="text-muted">{{ $booking->employee_email }}</small>
                                 </td>
-                                <td>{{ $booking->meetingRoom->name }}</td>
-                                <td>{{ $booking->meetingRoom->company->name }}</td>
+                                <td>{{ $booking->company?->name ?? '-' }}</td>
+                                <td>{{ $booking->department?->name ?? '-' }}</td>
+                                <td>
+                                    <strong>{{ $booking->meetingRoom->name }}</strong><br>
+                                    <small class="text-muted">{{ $booking->meetingRoom->company->name }}</small>
+                                </td>
                                 <td>
                                     <strong>{{ $booking->start_time->format('Y-m-d') }}</strong><br>
-                                    <small>{{ $booking->start_time->format('H:i') }} - {{ $booking->end_time->format('H:i') }}</small>
+                                    <small>{{ $booking->start_time->format('h:i A') }} - {{ $booking->end_time->format('h:i A') }}</small>
                                 </td>
                                 <td>
                                     @if($booking->status === 'confirmed')
@@ -124,7 +129,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">لا توجد حجوزات</td>
+                                <td colspan="9" class="text-center py-4 text-muted">لا توجد حجوزات</td>
                             </tr>
                         @endforelse
                     </tbody>

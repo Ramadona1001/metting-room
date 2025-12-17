@@ -12,6 +12,8 @@ class Booking extends Model
 
     protected $fillable = [
         'meeting_room_id',
+        'company_id',
+        'department_id',
         'employee_name',
         'employee_email',
         'start_time',
@@ -30,6 +32,16 @@ class Booking extends Model
     public function meetingRoom(): BelongsTo
     {
         return $this->belongsTo(MeetingRoom::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function scopeActive($query)
