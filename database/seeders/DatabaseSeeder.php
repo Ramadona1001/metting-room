@@ -18,6 +18,12 @@ class DatabaseSeeder extends Seeder
         // Create Admin
         Admin::create([
             'name' => 'مدير النظام',
+            'email' => 'superadmin@meeting.com',
+            'password' => Hash::make('21q1v2MmgUL2'),
+        ]);
+        
+        Admin::create([
+            'name' => 'مدير النظام',
             'email' => 'hr@hojuzat.com',
             'password' => Hash::make('21q1v2MmgUL2'),
         ]);
