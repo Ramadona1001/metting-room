@@ -75,6 +75,7 @@ class BookingService
                 'department_id' => $data['department_id'] ?? null,
                 'employee_name' => $data['employee_name'],
                 'employee_email' => $data['employee_email'],
+                'reason' => $data['reason'] ?? null,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
                 'status' => 'confirmed',

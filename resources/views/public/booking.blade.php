@@ -132,23 +132,41 @@
                     <p class="text-gray-500 text-sm mt-1">* الحجز متاح لنفس اليوم فقط</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="start_time" class="block text-gray-700 font-medium mb-2">وقت البداية <span class="text-red-500">*</span></label>
-                        <select name="start_time" id="start_time" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                required>
-                            <option value="">-- اختر الوقت --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="end_time" class="block text-gray-700 font-medium mb-2">وقت الانتهاء <span class="text-red-500">*</span></label>
-                        <select name="end_time" id="end_time" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                required>
-                            <option value="">-- اختر وقت البداية أولاً --</option>
-                        </select>
-                    </div>
+                <div class="mb-4">
+                    <label for="start_time" class="block text-gray-700 font-medium mb-2">وقت البداية <span class="text-red-500">*</span></label>
+                    <select name="start_time" id="start_time" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            required>
+                        <option value="">-- اختر الوقت --</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="duration" class="block text-gray-700 font-medium mb-2">مدة الحجز <span class="text-red-500">*</span></label>
+                    <select name="duration" id="duration" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            required>
+                        <option value="">-- اختر المدة --</option>
+                        <option value="30" {{ old('duration') == '30' ? 'selected' : '' }}>30 دقيقة</option>
+                        <option value="60" {{ old('duration') == '60' ? 'selected' : '' }}>ساعة واحدة</option>
+                        <option value="120" {{ old('duration') == '120' ? 'selected' : '' }}>ساعتين</option>
+                        <option value="full_day" {{ old('duration') == 'full_day' ? 'selected' : '' }}>اليوم كامل</option>
+                    </select>
+                    <input type="hidden" name="end_time" id="end_time">
+                </div>
+
+                <div class="mb-4">
+                    <label for="reason" class="block text-gray-700 font-medium mb-2">سبب الحجز <span class="text-red-500">*</span></label>
+                    <textarea name="reason" id="reason" rows="3"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="أدخل سبب الحجز..."
+                              required>{{ old('reason') }}</textarea>
+                </div>
+
+                <!-- Booking Summary -->
+                <div id="booking-summary" class="mb-6 p-4 bg-indigo-50 rounded-lg hidden">
+                    <h3 class="font-medium text-indigo-800 mb-2">ملخص الحجز:</h3>
+                    <div id="summary-content" class="text-indigo-600 text-sm"></div>
                 </div>
 
                 <!-- Available Time Slots Info -->
@@ -341,10 +359,60 @@
         }
     }
 
+    // Calculate end time based on start time and duration
+    function calculateEndTime() {
+        const startTime = document.getElementById('start_time').value;
+        const duration = document.getElementById('duration').value;
+        const endTimeInput = document.getElementById('end_time');
+        const summaryDiv = document.getElementById('booking-summary');
+        const summaryContent = document.getElementById('summary-content');
+        
+        if (!startTime || !duration) {
+            endTimeInput.value = '';
+            summaryDiv.classList.add('hidden');
+            return;
+        }
+        
+        const startMinutes = timeToMinutes(startTime);
+        const workEnd = timeToMinutes(workingHoursEnd);
+        let endMinutes;
+        let durationText;
+        
+        if (duration === 'full_day') {
+            endMinutes = workEnd;
+            durationText = 'اليوم كامل';
+        } else {
+            endMinutes = startMinutes + parseInt(duration);
+            durationText = duration + ' دقيقة';
+        }
+        
+        // Check if end time exceeds working hours
+        if (endMinutes > workEnd) {
+            endMinutes = workEnd;
+        }
+        
+        const endTimeStr = minutesToTime(endMinutes);
+        endTimeInput.value = endTimeStr;
+        
+        // Check for conflicts
+        if (hasOverlap(startTime, endTimeStr)) {
+            summaryDiv.classList.remove('hidden');
+            summaryContent.innerHTML = '<span class="text-red-600">⚠️ يوجد تعارض مع حجز آخر في هذا الوقت</span>';
+            return;
+        }
+        
+        // Show summary
+        summaryDiv.classList.remove('hidden');
+        summaryContent.innerHTML = `
+            <p><strong>من:</strong> ${formatTime12h(startTime)}</p>
+            <p><strong>إلى:</strong> ${formatTime12h(endTimeStr)}</p>
+            <p><strong>المدة:</strong> ${durationText}</p>
+        `;
+    }
+
     // Event listeners
-    document.getElementById('start_time').addEventListener('change', function() {
-        generateEndTimes(this.value);
-    });
+    document.getElementById('start_time').addEventListener('change', calculateEndTime);
+    document.getElementById('duration').addEventListener('change', calculateEndTime);
 
     document.getElementById('booking_date').addEventListener('change', function() {
         // For now, only today is allowed

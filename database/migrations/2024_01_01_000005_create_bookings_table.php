@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
             $table->string('employee_name');
             $table->string('employee_email');
+            $table->text('reason')->nullable();
             $table->dateTime('start_time');
             $table->dateTime('end_time');
             $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('confirmed');

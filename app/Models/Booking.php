@@ -16,6 +16,7 @@ class Booking extends Model
         'department_id',
         'employee_name',
         'employee_email',
+        'reason',
         'start_time',
         'end_time',
         'status',

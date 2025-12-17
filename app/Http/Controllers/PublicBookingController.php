@@ -65,6 +65,7 @@ class PublicBookingController extends Controller
             'booking_date' => 'required|date|date_equals:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
+            'reason' => 'required|string|max:1000',
         ], [
             'employee_name.required' => 'اسم الموظف مطلوب',
             'employee_email.required' => 'البريد الإلكتروني مطلوب',
@@ -78,6 +79,7 @@ class PublicBookingController extends Controller
             'start_time.required' => 'وقت البداية مطلوب',
             'end_time.required' => 'وقت الانتهاء مطلوب',
             'end_time.after' => 'وقت الانتهاء يجب أن يكون بعد وقت البداية',
+            'reason.required' => 'سبب الحجز مطلوب',
         ]);
 
         // Combine date with times
