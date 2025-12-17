@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\MeetingRoom;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
@@ -35,8 +36,15 @@ class PublicBookingController extends Controller
         }
 
         $todayBookings = $room->todayBookings()->get();
+        $companies = Company::active()->with('departments')->get();
 
-        return view('public.booking', compact('room', 'todayBookings'));
+        return view('public.booking', compact('room', 'todayBookings', 'companies'));
+    }
+    
+    public function getDepartments(int $companyId)
+    {
+        $departments = \App\Models\Department::where('company_id', $companyId)->get();
+        return response()->json($departments);
     }
 
     public function store(string $token, Request $request)

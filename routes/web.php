@@ -19,6 +19,7 @@ Route::get('/book/{token}', [PublicBookingController::class, 'show'])->name('pub
 Route::post('/book/{token}', [PublicBookingController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('public.booking.store');
+Route::get('/api/departments/{company}', [PublicBookingController::class, 'getDepartments'])->name('public.departments');
 
 /*
 |--------------------------------------------------------------------------

@@ -29,8 +29,7 @@
                     <div class="col-span-2 text-center p-3 bg-gray-50 rounded-lg">
                         <p class="text-gray-500 text-sm">ساعات العمل</p>
                         <p class="text-xl font-bold text-gray-800">
-                            {{ \Carbon\Carbon::parse($room->working_hours_start)->format('h:i A') }} - 
-                            {{ \Carbon\Carbon::parse($room->working_hours_end)->format('h:i A') }}
+                            من :  {{ \Carbon\Carbon::parse($room->working_hours_start)->format('h:i A') }} -  إلى : {{ \Carbon\Carbon::parse($room->working_hours_end)->format('h:i A') }}
                         </p>
                     </div>
                 @endif
@@ -101,16 +100,25 @@
                 </div>
 
                 <div class="mb-4">
+                    <label for="company_id" class="block text-gray-700 font-medium mb-2">الشركة <span class="text-red-500">*</span></label>
+                    <select name="company_id" id="company_id" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            required>
+                        <option value="">-- اختر الشركة --</option>
+                        @foreach($companies as $company)
+                            <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>
+                                {{ $company->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-4">
                     <label for="department_id" class="block text-gray-700 font-medium mb-2">القسم <span class="text-red-500">*</span></label>
                     <select name="department_id" id="department_id" 
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            required>
-                        <option value="">-- اختر القسم --</option>
-                        @foreach($room->company->departments as $dept)
-                            <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
-                                {{ $dept->name }}
-                            </option>
-                        @endforeach
+                            required disabled>
+                        <option value="">-- اختر الشركة أولاً --</option>
                     </select>
                 </div>
 
@@ -343,9 +351,47 @@
         generateStartTimes();
     });
 
+    // Company change - load departments
+    document.getElementById('company_id').addEventListener('change', function() {
+        const companyId = this.value;
+        const deptSelect = document.getElementById('department_id');
+        
+        if (!companyId) {
+            deptSelect.innerHTML = '<option value="">-- اختر الشركة أولاً --</option>';
+            deptSelect.disabled = true;
+            return;
+        }
+        
+        deptSelect.innerHTML = '<option value="">جاري التحميل...</option>';
+        deptSelect.disabled = true;
+        
+        fetch(`/api/departments/${companyId}`)
+            .then(response => response.json())
+            .then(departments => {
+                deptSelect.innerHTML = '<option value="">-- اختر القسم --</option>';
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.id;
+                    option.textContent = dept.name;
+                    deptSelect.appendChild(option);
+                });
+                deptSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error loading departments:', error);
+                deptSelect.innerHTML = '<option value="">خطأ في تحميل الأقسام</option>';
+            });
+    });
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         generateStartTimes();
+        
+        // If old company_id exists, trigger change to load departments
+        const companySelect = document.getElementById('company_id');
+        if (companySelect.value) {
+            companySelect.dispatchEvent(new Event('change'));
+        }
     });
 </script>
 @endsection
