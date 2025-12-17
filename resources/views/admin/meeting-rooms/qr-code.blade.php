@@ -47,7 +47,7 @@
                     @if($meetingRoom->working_hours_start && $meetingRoom->working_hours_end)
                         <div class="border rounded p-2 mt-2">
                             <small class="text-muted d-block">ساعات العمل</small>
-                            <strong>{{ $meetingRoom->working_hours_start }} - {{ $meetingRoom->working_hours_end }}</strong>
+                            <strong>{{ \Carbon\Carbon::parse($meetingRoom->working_hours_start)->format('h:i A') }} - {{ \Carbon\Carbon::parse($meetingRoom->working_hours_end)->format('h:i A') }}</strong>
                         </div>
                     @endif
                 </div>
