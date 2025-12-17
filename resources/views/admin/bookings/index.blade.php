@@ -78,6 +78,7 @@
                             <th>قسم الموظف</th>
                             <th>الغرفة</th>
                             <th>الوقت</th>
+                            <th>السبب</th>
                             <th>الحالة</th>
                             <th>الإجراءات</th>
                         </tr>
@@ -104,6 +105,9 @@
                                 <td>
                                     <strong>{{ $booking->start_time->format('Y-m-d') }}</strong><br>
                                     <small>{{ $booking->start_time->format('h:i A') }} - {{ $booking->end_time->format('h:i A') }}</small>
+                                </td>
+                                <td>
+                                    {{ $booking->reason ?? '-' }}
                                 </td>
                                 <td>
                                     @if($booking->status === 'confirmed')
