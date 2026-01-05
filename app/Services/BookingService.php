@@ -24,15 +24,11 @@ class BookingService
             return ['success' => false, 'message' => 'الشركة غير نشطة حالياً'];
         }
 
-        // Validate same day booking
-        if (!$startTime->isToday() || !$endTime->isToday()) {
-            return ['success' => false, 'message' => 'يمكن الحجز فقط لنفس اليوم'];
+        // Validate booking date is not in the past
+        if ($startTime->isPast()) {
+            return ['success' => false, 'message' => 'لا يمكن الحجز في وقت ماضي'];
         }
 
-        // Validate start time is in the future
-        if ($startTime->isPast()) {
-            return ['success' => false, 'message' => 'وقت البداية يجب أن يكون في المستقبل'];
-        }
 
         // Validate end time is after start time
         if ($endTime->lte($startTime)) {

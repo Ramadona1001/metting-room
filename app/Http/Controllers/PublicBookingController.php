@@ -35,10 +35,15 @@ class PublicBookingController extends Controller
             ]);
         }
 
-        $todayBookings = $room->todayBookings()->get();
+        // Get all future bookings for the room
+        $futureBookings = $room->bookings()
+            ->where('start_time', '>=', now()->startOfDay())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('start_time')
+            ->get();
         $companies = Company::active()->with('departments')->get();
 
-        return view('public.booking', compact('room', 'todayBookings', 'companies'));
+        return view('public.booking', compact('room', 'futureBookings', 'companies'));
     }
     
     public function getDepartments(int $companyId)
@@ -62,7 +67,7 @@ class PublicBookingController extends Controller
             'employee_email' => 'required|email|max:255',
             'company_id' => 'required|exists:companies,id',
             'department_id' => 'required|exists:departments,id',
-            'booking_date' => 'required|date|date_equals:today',
+            'booking_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'reason' => 'required|string|max:1000',
@@ -75,7 +80,7 @@ class PublicBookingController extends Controller
             'department_id.required' => 'القسم مطلوب',
             'department_id.exists' => 'القسم غير موجود',
             'booking_date.required' => 'تاريخ الحجز مطلوب',
-            'booking_date.date_equals' => 'الحجز متاح لنفس اليوم فقط',
+            'booking_date.after_or_equal' => 'لا يمكن الحجز في تاريخ ماضي',
             'start_time.required' => 'وقت البداية مطلوب',
             'end_time.required' => 'وقت الانتهاء مطلوب',
             'end_time.after' => 'وقت الانتهاء يجب أن يكون بعد وقت البداية',
@@ -83,8 +88,8 @@ class PublicBookingController extends Controller
         ]);
 
         // Combine date with times
-        $validated['start_time'] = $validated['booking_date'] . ' ' . $validated['start_time'];
-        $validated['end_time'] = $validated['booking_date'] . ' ' . $validated['end_time'];
+        $validated['start_time'] = $validated['booking_date'] . ' ' . $validated['start_time'] . ':00';
+        $validated['end_time'] = $validated['booking_date'] . ' ' . $validated['end_time'] . ':00';
 
         $result = $this->bookingService->createBooking($room, $validated);
 

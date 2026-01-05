@@ -35,22 +35,22 @@
                 @endif
             </div>
 
-            <!-- Today's Bookings -->
+            <!-- Future Bookings -->
             <div class="mb-6">
-                <h2 class="text-lg font-bold text-gray-800 mb-3">حجوزات اليوم</h2>
-                @if($todayBookings->count() > 0)
-                    <div class="space-y-2">
-                        @foreach($todayBookings as $booking)
+                <h2 class="text-lg font-bold text-gray-800 mb-3">الحجوزات القادمة</h2>
+                @if($futureBookings->count() > 0)
+                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                        @foreach($futureBookings as $booking)
                             <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
-                                <span class="text-red-800 font-medium">محجوز</span>
-                                <span class="text-red-600">
-                                    {{ $booking->start_time->format('h:i A') }} - {{ $booking->end_time->format('h:i A') }}
-                                </span>
+                                <div>
+                                    <span class="text-red-800 font-medium block">{{ $booking->start_time->format('Y-m-d') }}</span>
+                                    <span class="text-red-600 text-sm">{{ $booking->start_time->format('h:i A') }} - {{ $booking->end_time->format('h:i A') }}</span>
+                                </div>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <p class="text-green-600 bg-green-50 p-3 rounded-lg">لا توجد حجوزات اليوم - الغرفة متاحة</p>
+                    <p class="text-green-600 bg-green-50 p-3 rounded-lg">لا توجد حجوزات - الغرفة متاحة</p>
                 @endif
             </div>
 
@@ -127,9 +127,8 @@
                     <input type="date" name="booking_date" id="booking_date" value="{{ old('booking_date', date('Y-m-d')) }}"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                            min="{{ date('Y-m-d') }}"
-                           max="{{ date('Y-m-d') }}"
                            required>
-                    <p class="text-gray-500 text-sm mt-1">* الحجز متاح لنفس اليوم فقط</p>
+                    <p class="text-gray-500 text-sm mt-1">* يمكن الحجز بشكل مسبق</p>
                 </div>
 
                 <div class="mb-4">
@@ -189,8 +188,9 @@
     const workingHoursStart = '{{ $room->working_hours_start ?? "08:00" }}';
     const workingHoursEnd = '{{ $room->working_hours_end ?? "18:00" }}';
     const maxDuration = {{ $room->max_booking_duration ?? 120 }};
-    const bookedSlots = @json($todayBookings->map(function($b) {
+    const bookedSlots = @json($futureBookings->map(function($b) {
         return [
+            'date' => $b->start_time->format('Y-m-d'),
             'start' => $b->start_time->format('H:i'),
             'end' => $b->end_time->format('H:i')
         ];
@@ -218,11 +218,16 @@
         return false;
     }
 
-    // Check if time range overlaps with booked slots
+    // Check if time range overlaps with booked slots for selected date
     function hasOverlap(startTime, endTime) {
+        const selectedDate = document.getElementById('booking_date').value;
+        if (!selectedDate) return false;
+        
+        const dateBookings = bookedSlots.filter(slot => slot.date === selectedDate);
         const startMinutes = timeToMinutes(startTime);
         const endMinutes = timeToMinutes(endTime);
-        for (const slot of bookedSlots) {
+        
+        for (const slot of dateBookings) {
             const bookedStart = timeToMinutes(slot.start);
             const bookedEnd = timeToMinutes(slot.end);
             if (startMinutes < bookedEnd && endMinutes > bookedStart) {
@@ -250,20 +255,28 @@
         const startSelect = document.getElementById('start_time');
         startSelect.innerHTML = '<option value="">-- اختر الوقت --</option>';
         
+        const selectedDate = document.getElementById('booking_date').value;
+        if (!selectedDate) {
+            return;
+        }
+        
         const now = new Date();
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const selectedDateObj = new Date(selectedDate + 'T00:00:00');
+        const isToday = selectedDate === now.toISOString().slice(0, 10);
+        
+        const currentMinutes = isToday ? (now.getHours() * 60 + now.getMinutes()) : 0;
         const workStart = timeToMinutes(workingHoursStart);
         const workEnd = timeToMinutes(workingHoursEnd);
         
-        // Start from current time (rounded up to next 30 min) or working hours start
-        let startFrom = Math.max(workStart, Math.ceil(currentMinutes / 30) * 30);
+        // Start from current time if today, otherwise from work start
+        let startFrom = isToday ? Math.max(workStart, Math.ceil(currentMinutes / 30) * 30) : workStart;
         
-        const availableSlots = [];
+        // Get bookings for selected date
+        const dateBookings = bookedSlots.filter(slot => slot.date === selectedDate);
         
         for (let time = startFrom; time < workEnd - 30; time += 30) {
             const timeStr = minutesToTime(time);
-            if (!isTimeBooked(timeStr)) {
-                availableSlots.push(timeStr);
+            if (!isTimeBookedForDate(timeStr, dateBookings)) {
                 const option = document.createElement('option');
                 option.value = timeStr;
                 option.textContent = formatTime12h(timeStr);
@@ -273,6 +286,19 @@
         
         // Show available slots info
         updateAvailableSlotsInfo();
+    }
+    
+    // Check if time is booked for specific date
+    function isTimeBookedForDate(time, dateBookings) {
+        const timeMinutes = timeToMinutes(time);
+        for (const slot of dateBookings) {
+            const startMinutes = timeToMinutes(slot.start);
+            const endMinutes = timeToMinutes(slot.end);
+            if (timeMinutes >= startMinutes && timeMinutes < endMinutes) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Generate available end times based on start time
@@ -415,8 +441,8 @@
     document.getElementById('duration').addEventListener('change', calculateEndTime);
 
     document.getElementById('booking_date').addEventListener('change', function() {
-        // For now, only today is allowed
         generateStartTimes();
+        calculateEndTime(); // Reset end time when date changes
     });
 
     // Company change - load departments
